@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.templatetags.static import static
 import json
 from phonenumber_field.phonenumber import PhoneNumber
+import phonenumbers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -73,7 +74,23 @@ def register_order(request):
         return Response({'Error': "'products' должен быть не пустым списком"}, status=400)
     if not isinstance(ordered_items, list):
         return Response({'Error': "'products' должен быть списком"}, status=400)
-    
+    required_fields = ['address', 'firstname', 'lastname', 'phonenumber']
+    missing_fields = [field for field in required_fields if not order.get(field)]
+    phonenumber = order.get('phonenumber')
+    if missing_fields:
+        return Response({'Error': f"Пропущен обязательный элемент: {', '.join(missing_fields)}"}, status=400)
+    for field in required_fields:
+        if not isinstance(order.get(field), str):
+            return Response({'Error': f"{field}: Not a valid string"}, status=400)
+
+    try:
+        phone = PhoneNumber.from_string(phone_number=phonenumber, region='RU')
+        if not phone.is_valid():
+            raise phonenumbers.phonenumberutil.NumberParseException(0, "Invalid phone number")
+        phone = phone.as_e164
+    except phonenumbers.phonenumberutil.NumberParseException:
+        return Response({'Error': 'Invalid phone number'}, status=400)
+
 
     
 
@@ -81,18 +98,23 @@ def register_order(request):
         address=order.get('address'),
         name=order.get('firstname'),
         surname=order.get('lastname'),
-        phone=PhoneNumber.from_string(
-            phone_number=order.get('phonenumber'),
-            region='RU'
-        ).as_e164,
+        phone=phone,
     )
 
     for item in ordered_items:
-        ordered_product = Product.objects.get(id=item.get('product'))
-        OrderProduct.objects.create(
-            order=new_order,
-            product=ordered_product,
-            quantity=item.get('quantity')
-        )
+        product_id = item.get('product')
+        quantity = item.get('quantity')
+
+        if quantity is None:
+            return Response({'Error': 'Поле количество не может быть пустыми'}, status=400)
+        try:
+            ordered_product = Product.objects.get(id=item.get('product'))
+            OrderProduct.objects.create(
+                order=new_order,
+                product=ordered_product,
+                quantity=item.get('quantity')
+            )
+        except Product.DoesNotExist:
+            return Response({'Error': f"'products': недопустимый первичный ключ '{product_id}'"}, status=400)
 
     return Response(order)
