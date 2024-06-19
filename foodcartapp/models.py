@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Restaurant(models.Model):
@@ -97,7 +98,7 @@ class RestaurantMenuItem(models.Model):
     restaurant = models.ForeignKey(
         Restaurant,
         related_name='menu_items',
-        verbose_name="ресторан",
+        verbose_name='ресторан',
         on_delete=models.CASCADE,
     )
     product = models.ForeignKey(
@@ -120,4 +121,48 @@ class RestaurantMenuItem(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.restaurant.name} - {self.product.name}"
+        return f'{self.restaurant.name} - {self.product.name}'
+
+
+class Order(models.Model):
+    address = models.CharField(
+        max_length=50,
+        verbose_name='Адрес',
+        db_index=True
+    )
+    name = models.CharField(
+        max_length=50,
+        verbose_name='Имя'
+    )
+    surname = models.CharField(
+        max_length=50,
+        verbose_name='Фамилия'
+    )
+    phone = PhoneNumberField(
+        verbose_name='Мобильный номер',
+        region='RU',
+        db_index=True
+    )
+
+    class Meta:
+        verbose_name='Заказ'
+        verbose_name_plural='Заказы'
+
+    def __str__(self):
+        return f'{self.name} {self.surname} {self.address}'
+    
+
+class OrderProduct(models.Model):
+    order = models.ForeignKey(Order,
+                              verbose_name='Элементы заказа',
+                              on_delete=models.CASCADE,
+                              related_name='items')
+    product = models.ForeignKey(Product,
+                                verbose_name='Товар',
+                                on_delete=models.SET_NULL,
+                                null=True)
+    quantity = models.IntegerField(verbose_name='Количество')
+
+    class Meta:
+        verbose_name='Элемент заказа'
+        verbose_name_plural='Элементы заказа'
