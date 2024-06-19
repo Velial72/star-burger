@@ -64,9 +64,18 @@ def product_list_api(request):
 def register_order(request):
     try:
         order = request.data
+        ordered_items = order.get('products')
     except ValueError:
         return Response({'Error': 'ValueError'})
-    ordered_items = order.get('products')
+    if 'products' not in order:
+        return Response({'Error': "'products' обязательное для заполнения поле"}, status=400)
+    if not ordered_items:
+        return Response({'Error': "'products' должен быть не пустым списком"}, status=400)
+    if not isinstance(ordered_items, list):
+        return Response({'Error': "'products' должен быть списком"}, status=400)
+    
+
+    
 
     new_order = Order.objects.create(
         address=order.get('address'),
