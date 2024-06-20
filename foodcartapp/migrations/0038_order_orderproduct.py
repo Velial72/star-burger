@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('quantity', models.IntegerField(verbose_name='Количество')),
                 ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='foodcartapp.order', verbose_name='Элементы заказа')),
-                ('product', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='foodcartapp.product', verbose_name='Товар')),
+                ('products', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='foodcartapp.product', verbose_name='Товар')),
             ],
             options={
                 'verbose_name': 'Элемент заказа',
