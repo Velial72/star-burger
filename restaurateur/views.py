@@ -95,7 +95,5 @@ def view_orders(request):
     # return render(request, template_name='order_items.html', context={
     #     'orders'
     # })
-    orders = Order.objects.all()
-    for oreder in orders:
-        print(oreder)
+    orders = Order.objects.all().calculate_price()
     return render(request, template_name='order_items.html', context={'orders': orders})
