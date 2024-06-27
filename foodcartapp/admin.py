@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.shortcuts import reverse
+from django.shortcuts import HttpResponseRedirect, reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
 
@@ -116,3 +116,10 @@ class ProductInline(admin.TabularInline):
 class OrderAdmin(admin.ModelAdmin):
     list_display = ['firstname', 'lastname', 'address']
     inlines = [ProductInline]
+
+    def response_change(self, request, obj):
+        res = super(OrderAdmin, self).response_change(request, obj)
+        if "next" in request.GET:
+            return HttpResponseRedirect(request.GET['next'])
+        else:
+            return res
