@@ -45,7 +45,7 @@ class OrderProductSerializer(serializers.ModelSerializer):
     quantity = serializers.IntegerField()
     class Meta:
         model = OrderProduct
-        fields = ['product', 'quantity']
+        fields = ['product', 'price', 'quantity']
 
 class OrderSerializer(serializers.ModelSerializer):
     products = OrderProductSerializer(many=True, write_only=True)
@@ -69,5 +69,7 @@ class OrderSerializer(serializers.ModelSerializer):
         products_data = validated_data.pop('products')
         order = Order.objects.create(**validated_data)
         for item in products_data:
+            if not item.get('price'):
+                item['price'] = float(item['quantity'] * item['product'].price)
             OrderProduct.objects.create(order=order, **item)
         return order
