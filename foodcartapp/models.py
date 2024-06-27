@@ -134,6 +134,12 @@ class OrderQuerySet(models.QuerySet):
     
 
 class Order(models.Model):
+    ORDER_STATUS = [
+        ('U', 'Необработан'),
+        ('P', 'Готовится'),
+        ('D', 'Доставка'),
+        ('F', 'Выполнен'),
+    ]
     address = models.CharField(
         max_length=50,
         verbose_name='Адрес',
@@ -151,6 +157,13 @@ class Order(models.Model):
         verbose_name='Мобильный номер',
         region='RU',
         db_index=True
+    )
+    status = models.CharField(
+        verbose_name='Статус заказа',
+        max_length=15,
+        db_index=True,
+        choices=ORDER_STATUS,
+        default='U'
     )
     objects = OrderQuerySet.as_manager()
 
