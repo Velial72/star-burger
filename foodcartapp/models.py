@@ -141,6 +141,11 @@ class Order(models.Model):
         ('D', 'Доставка'),
         ('F', 'Выполнен'),
     ]
+    PAYMENT = [
+        ('C', 'Наличностью'),
+        ('O', 'Онлайн'),
+        ('CC', 'Картой'),
+    ]
     address = models.CharField(
         max_length=50,
         verbose_name='Адрес',
@@ -165,6 +170,13 @@ class Order(models.Model):
         db_index=True,
         choices=ORDER_STATUS,
         default='U'
+    )
+    payment = models.CharField(
+        verbose_name='Способ оплаты',
+        max_length=10,
+        db_index=True,
+        choices=PAYMENT,
+        default='C'
     )
     comment = models.TextField(
         verbose_name='Комментарий',
