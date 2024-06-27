@@ -165,6 +165,10 @@ class Order(models.Model):
         choices=ORDER_STATUS,
         default='U'
     )
+    comment = models.TextField(
+        verbose_name='Комментарий',
+        blank=True
+    )
     objects = OrderQuerySet.as_manager()
 
     class Meta:
