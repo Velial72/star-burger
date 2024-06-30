@@ -21,6 +21,7 @@
       <th>Телефон</th>
       <th>Адрес доставки</th>
       <th>Комментарий</th>
+      <th>Рестораны</th>
       <th>Ссылка на админку</th>
     </tr>
 
@@ -34,6 +35,22 @@
         <td>{{ order.phonenumber }}</td>
         <td>{{ order.address }}</td>
         <td>{{ order.comment }}</td>
+        <td>
+          {% if order.restaurant %}
+            Готовит {{ order.restaurant }}
+          {% elif order.available_restaurants %}
+            <details>
+              <summary>Может быть приготовлен ресторанами:</summary>
+              <ul>
+                {% for restaurant in order.available_restaurants %}
+                  <li>{{ restaurant }}
+                {% endfor %}
+              </ul>
+            </details>
+          {% else %}
+            Ошибка определения координат
+          {% endif %}
+        </td>
         <td><a href='{% url "admin:foodcartapp_order_change" object_id=order.id %}?next={{  "/manager/orders/" |urlencode}}'>Редактировать</a></td>
       </tr>
     {% endfor %}

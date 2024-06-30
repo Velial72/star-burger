@@ -200,6 +200,21 @@ class Order(models.Model):
         db_index=True
     )
     objects = OrderQuerySet.as_manager()
+    # restaurant = models.ForeignKey(Restaurant,
+    #                                        related_name='restaurant',
+    #                                        on_delete=models.SET_NULL,
+    #                                        null=True,
+    #                                        blank=True)
+    # available_restaurants = models.TextField(
+    #                                 verbose_name='Доступные рестораны',
+    #                                 blank=True,
+    #                                 null=True) 
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.SET_NULL,
+                                   null=True, 
+                                   blank=True, 
+                                   related_name='orders', 
+                                   verbose_name='Ресторан')
+                                
 
     class Meta:
         verbose_name='Заказ'

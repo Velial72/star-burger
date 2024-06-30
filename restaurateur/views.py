@@ -3,12 +3,13 @@ from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
+from django.db.models import Q, Case, When, IntegerField
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
 
-from foodcartapp.models import Product, Restaurant, Order
+from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
 
 
 class Login(forms.Form):
@@ -92,8 +93,30 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    # return render(request, template_name='order_items.html', context={
-    #     'orders'
-    # })
-    orders = Order.objects.filter(status='U').calculate_price()
+    orders = (Order.objects
+              .filter(Q(status='U') | Q(status='P'))
+              .annotate(
+                  status_order=Case(
+                      When(status='U', then=0),
+                      When(status='P', then=1),
+                      output_field=IntegerField()
+                  )
+              )
+              .order_by('status_order')
+              .calculate_price())
+    
+    for order in orders:
+        order.available_restaurants = get_available_restaurants(order)
+
     return render(request, template_name='order_items.html', context={'orders': orders})
+
+
+def get_available_restaurants(order):
+    order_product_names = {item.product for item in order.items.all()}
+    
+    available_restaurants = Restaurant.objects.filter(
+        menu_items__product__name__in=order_product_names, 
+        menu_items__availability=True
+    ).distinct()
+    
+    return available_restaurants
