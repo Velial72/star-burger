@@ -1,3 +1,8 @@
+import requests
+from geopy import distance
+from environs import Env
+
+
 from django import forms
 from django.shortcuts import redirect, render
 from django.views import View
@@ -7,9 +12,18 @@ from django.db.models import Q, Case, When, IntegerField
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
+from django.conf import settings
+from geopy.distance import geodesic
 
 
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
+from place.models import Place
+
+
+env = Env()
+env.read_env()
+
+yandex_geocoder_api_key = env.str('YANDEX_GEOCODER_API_KEY')
 
 
 class Login(forms.Form):
@@ -84,6 +98,32 @@ def view_products(request):
     })
 
 
+def fetch_coordinates(address):
+    place = Place.objects.filter(address=address).first()
+    if place and place.lat and place.lon:
+        return float(place.lat), float(place.lon)
+    else:
+        apikey = settings.YANDEX_GEOCODER_API_KEY
+        base_url = "https://geocode-maps.yandex.ru/1.x"
+        response = requests.get(base_url, params={
+            "geocode": address,
+            "apikey": apikey,
+            "format": "json",
+        })
+        response.raise_for_status()
+        found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+        if found_places:
+            most_relevant = found_places[0]
+            lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+
+            Place.objects.create(address=address, lat=lat, lon=lon)
+
+            return float(lat), float(lon)
+        else:
+            return None
+        
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_restaurants(request):
     return render(request, template_name="restaurants_list.html", context={
@@ -106,7 +146,20 @@ def view_orders(request):
               .calculate_price())
     
     for order in orders:
-        order.available_restaurants = get_available_restaurants(order)
+        available_restaurants = get_available_restaurants(order)
+        order_coordinates = fetch_coordinates(order.address)
+        
+        restaurants_with_distance = []
+        for restaurant in available_restaurants:
+            restaurant_coordinates = fetch_coordinates(restaurant.address)
+            if restaurant_coordinates and order_coordinates:
+                distance = geodesic(order_coordinates, restaurant_coordinates).kilometers
+                restaurants_with_distance.append((restaurant, round(distance, 2)))
+            else:
+                restaurants_with_distance.append((restaurant, None))
+        
+        restaurants_with_distance.sort(key=lambda x: (x[1] is None, x[1]))
+        order.available_restaurants = restaurants_with_distance
 
     return render(request, template_name='order_items.html', context={'orders': orders})
 
