@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.timezone import now
 from phonenumber_field.modelfields import PhoneNumberField
 from django.db.models import F, Sum
@@ -225,11 +225,12 @@ class OrderProduct(models.Model):
                                 on_delete=models.SET_NULL,
                                 null=True)
     quantity = models.IntegerField(verbose_name='Количество',
-                                   max_length=20)
+                                   validators=[MinValueValidator(1)])
     price = models.DecimalField(verbose_name='Стоимость',
+                                default=0,
                                 max_digits=8,
                                 decimal_places=2,
-                                validators=[MinValueValidator(0.0)])
+                                validators=[MinValueValidator(0)])
 
     class Meta:
         verbose_name='Элемент заказа'
