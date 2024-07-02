@@ -224,11 +224,11 @@ class OrderProduct(models.Model):
                                 verbose_name='Товар',
                                 on_delete=models.SET_NULL,
                                 null=True)
-    quantity = models.IntegerField(verbose_name='Количество')
+    quantity = models.IntegerField(verbose_name='Количество',
+                                   max_length=20)
     price = models.DecimalField(verbose_name='Стоимость',
-                                default=0,
                                 max_digits=8,
-                                decimal_places=0,
+                                decimal_places=2,
                                 validators=[MinValueValidator(0.0)])
 
     class Meta:
