@@ -78,4 +78,4 @@ def register_order(request):
             'phonenumber': order.phonenumber.as_e164
         }
         return Response(response_data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
